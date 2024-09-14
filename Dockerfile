@@ -1,36 +1,25 @@
 # Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:18-alpine AS base 
 
+# setup pnpm 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+FROM base AS build
+
+COPY . /usr/src/app
 # Set working directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (or yarn.lock)
-COPY package*.json ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run -r build
+RUN pnpm deploy --filter=api --prod /prod/api
 
-# Install dependencies
-RUN npm install
+FROM base AS api 
+COPY --from=build /prod/api /prod/api
+WORKDIR /prod/api
+EXPOSE 3000 
+CMD [ "pnpm", "start" ]
 
-# Copy the rest of the application code
-COPY . .
 
-# Build the TypeScript code
-RUN npm run build
-
-# Stage 2: Production
-FROM node:18-alpine
-
-# Set working directory
-WORKDIR /app
-
-# Copy built files from the builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
-
-# Install only production dependencies
-RUN npm install --only=production
-
-# Expose the port the app will run on
-EXPOSE 3000
-
-# Command to run the application
-CMD ["node", "dist/index.js"]

@@ -27,3 +27,8 @@ dist/
 
 # misc
 .DS_Store
+
+
+
+.nx/cache
+.nx/workspace-data
