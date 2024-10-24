@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "docker:build": "podman build -f dockerfile-nextjs -t coolify-test .",
+    "docker:run": "podman run --rm -p 3000:3000 localhost/coolify-test",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
